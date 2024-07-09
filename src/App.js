@@ -1,8 +1,15 @@
 import { useState, useEffect } from "react";
 import "./App.css";
 import { Auth } from "./components/auth";
-import { db } from "./config/firebase";
-import { getDocs, collection, addDoc } from "firebase/firestore";
+import { db, auth } from "./config/firebase";
+import {
+  getDocs,
+  collection,
+  addDoc,
+  deleteDoc,
+  doc,
+  updateDoc,
+} from "firebase/firestore";
 
 function App() {
   const [movieList, setMovieList] = useState([]);
@@ -12,6 +19,7 @@ function App() {
   const [newReleaseDate, setNewReleaseDate] = useState(0);
   const [isNewMovieOscar, setIsNewMovieOscar] = useState(false);
   const moviesCollectionRef = collection(db, "movies");
+  const [updateTitle, setUpdateTitle] = useState("");
 
   const getMoviesList = async () => {
     try {
@@ -36,7 +44,28 @@ function App() {
         title: newMovieTitle,
         releaseData: newReleaseDate,
         receiverdAnOscar: isNewMovieOscar,
+        userId: auth?.currentUser?.uid,
       });
+      getMoviesList();
+    } catch (err) {
+      console.log(err);
+    }
+  };
+
+  const deleteMovie = async (id) => {
+    try {
+      const movieDoc = doc(db, "movies", id);
+      await deleteDoc(movieDoc);
+      getMoviesList();
+    } catch (err) {
+      console.log(err);
+    }
+  };
+
+  const updateMovie = async (id) => {
+    try {
+      const movieDoc = doc(db, "movies", id);
+      await updateDoc(movieDoc, { title: updateTitle });
       getMoviesList();
     } catch (err) {
       console.log(err);
@@ -71,6 +100,12 @@ function App() {
               {movie.title}
             </h1>
             <p>Date : {movie.releaseData}</p>
+            <button onClick={() => deleteMovie(movie.id)}>Delete button</button>
+            <input
+              placeholder="new  title"
+              onChange={(e) => setUpdateTitle(e.target.value)}
+            />
+            <button onClick={() => updateMovie(movie.id)}> update title</button>
           </div>
         ))}
       </div>
